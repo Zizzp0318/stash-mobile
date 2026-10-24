@@ -38,6 +38,8 @@ Sources/
   Cache/ThumbCache.swift  缩略图 内存+磁盘 两级缓存
   UI/                     连接页 / 素材页 / 查看器 / 设置 / 传输列表 / 相册选择器
 Resources/Info.plist      ATS、本地网络、相册写入权限说明
+Resources/Assets.xcassets App 图标（icon-1024.png 由 tools/draw_icon.py 生成）
+tools/draw_icon.py        画图标（4× 超采样后降到 1024，避免圆角毛边）
 .github/workflows/ios.yml 云端编译出未签名 ipa
 ```
 
@@ -125,4 +127,5 @@ HEIC 传过去会「导入成功但永远没有缩略图」——比拒收更糟
 - 网格是正方形格子，不是桌面端那种瀑布流（瀑布流要自己写 layout，收益不抵复杂度）
 - 不全量镜像：断网时只能看已经缓存过的缩略图
 - 不做分享扩展：免费签名不支持 App Groups，扩展拿不到 token，得单独再配对一次
-- 不含 App 图标（`Assets.xcassets` 未提供），系统会显示默认空白图标
+- 图标由脚本生成：`tools/draw_icon.py` → `Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png`。
+  换图只需替换那张 1024×1024 无 alpha 的 PNG（或改脚本重跑），不用动别的地方

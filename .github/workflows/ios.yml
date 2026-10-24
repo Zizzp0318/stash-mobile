@@ -8,6 +8,13 @@ name: build-unsigned-ipa
 on:
   push:
     branches: [main]
+    # 只改文档/构建产物不重新编译 —— 一次 iOS 构建要 1 分钟，
+    # 而改 README 触发它纯属浪费
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'dist/**'
   workflow_dispatch:
 
 jobs:

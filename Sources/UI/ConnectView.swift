@@ -36,8 +36,9 @@ struct ConnectView: View {
                     label("配对码")
                     TextField("6 位数字", text: $code)
                         .keyboardType(.numberPad)
+                        // 不能用 .tracking(6)：那是 Text 的修饰符，TextField 上没有，会编译失败
                         .font(.system(size: 20, weight: .medium, design: .monospaced))
-                        .tracking(6)
+                        .multilineTextAlignment(.center)
                         .padding(12)
                         .background(Theme.raised)
                         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))

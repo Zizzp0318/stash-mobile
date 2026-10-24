@@ -1,0 +1,62 @@
+name: build-unsigned-ipa
+
+# Windows 上无法运行 xcodebuild，所以「编译」这一步放到 GitHub 的 macOS 机器上。
+# 产出的是**未签名**的 .ipa —— 签名与安装交给本地 Windows 上的 Sideloadly + 免费 Apple ID。
+#
+# 公开仓库跑 macOS runner 不消耗私有仓库的额度（私有仓库 macOS 按 10 倍计分钟）。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 显示 Xcode 版本
+        run: xcodebuild -version
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成工程
+        run: xcodegen generate
+
+      - name: 编译（不签名）
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project StashMobile.xcodeproj \
+            -scheme StashMobile \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: 打包成 ipa
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release-iphoneos/Stash.app"
+          test -d "$APP" || { echo "没找到 Stash.app"; ls -R build/Build/Products | head -50; exit 1; }
+          rm -rf Payload Stash.ipa
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          # 未签名 ipa 的规范结构：Payload/<App>.app，zip 后改后缀
+          zip -qry Stash.ipa Payload
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stash-ipa
+          path: Stash.ipa
+          if-no-files-found: error
+          retention-days: 30

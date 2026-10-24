@@ -12,20 +12,31 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    # ⚠️ 不要用 macos-14：它默认的 Xcode 是 15.4，而 XcodeGen 2.46 生成的是
+    # objectVersion 77（Xcode 16 的工程格式），Xcode 15 打不开，会报
+    # "cannot be opened because it is in a future Xcode project file format (77)"，
+    # 而且是在 xcodebuild 第一步就失败，编译一行都没跑。
+    # macos-latest 带着 Xcode 16+，能读 77。
+    runs-on: macos-latest
     timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: 显示 Xcode 版本
-        run: xcodebuild -version
+      - name: 环境自检
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
 
       - name: 安装 XcodeGen
         run: brew install xcodegen
 
       - name: 生成工程
-        run: xcodegen generate
+        run: |
+          xcodegen generate
+          # 打出来备查：这个值与 runner 上 Xcode 的支持上限不匹配就会「读不了工程」
+          grep -m1 'objectVersion' StashMobile.xcodeproj/project.pbxproj || true
 
       - name: 编译（不签名）
         run: |
